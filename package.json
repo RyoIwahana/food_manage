@@ -1,0 +1,10 @@
+{
+  "name": "kitchen-stock",
+  "version": "1.0.0",
+  "private": true,
+  "description": "飲食店向け在庫・発注管理",
+  "scripts": {
+    "dev": "python3 -m http.server 4173 --bind 127.0.0.1 --directory dist",
+    "check": "node --check dist/app.js"
+  }
+}
