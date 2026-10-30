@@ -100,7 +100,23 @@ alter table public.products replica identity full;
 alter table public.stock_movements replica identity full;
 alter table public.orders replica identity full;
 alter table public.order_lines replica identity full;
-alter publication supabase_realtime add table public.products, public.stock_movements, public.orders, public.order_lines;
+
+-- Make the script safe to run again after a partial success.
+do $$
+begin
+  if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'products') then
+    alter publication supabase_realtime add table public.products;
+  end if;
+  if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'stock_movements') then
+    alter publication supabase_realtime add table public.stock_movements;
+  end if;
+  if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'orders') then
+    alter publication supabase_realtime add table public.orders;
+  end if;
+  if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'order_lines') then
+    alter publication supabase_realtime add table public.order_lines;
+  end if;
+end $$;
 
 -- After creating a store, add the first authenticated user as owner:
 -- insert into public.store_members(store_id, user_id, role)
