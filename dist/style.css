@@ -2,3 +2,4 @@
 
 .tabs{overflow-x:auto;gap:20px}.tabs button{white-space:nowrap}.review-note{color:#a77a2b;white-space:normal;display:inline-block;max-width:250px;line-height:1.6}.food b{white-space:normal;display:block;min-width:155px;max-width:310px;line-height:1.6}.demo{line-height:1.9}.stat strong{font-size:28px}dialog{max-height:88vh;overflow-y:auto}#fields label{line-height:1.6}
 .shop{display:grid;gap:8px}.shop label{font-size:10px;letter-spacing:.5px;color:var(--muted);font-weight:500}.shop select{width:100%;padding:8px 7px;font-size:12px;font-weight:600}.shop small{margin:0}
+.order-check{display:flex;align-items:center;gap:5px;white-space:nowrap;font-size:10px;color:#72806f}.order-check input{accent-color:var(--green);min-width:auto}
