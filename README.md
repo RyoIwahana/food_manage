@@ -21,6 +21,10 @@
 発注の「発注済み」はアプリ内の管理状態であり、仕入先への送信完了を意味しない。
 本運用向けには共有DB・認証権限・復元・並行更新対応を追加する。
 
+## Vercel＋Supabase移行
+
+共有同期版のデータベース定義は supabase/schema.sql にあります。SupabaseでSQLを実行し、Vercelに NEXT_PUBLIC_SUPABASE_URL と NEXT_PUBLIC_SUPABASE_ANON_KEY を設定した後、フロントエンドを共有APIへ切り替えます。現在の静的版は引き続きlocalStorage版として動作します。
+
 ## 動作確認
 ブラウザで不足5食材→仕入先4社への発注分割、トマト8kg入荷（2→10kg）、再読込後の永続化を確認。
 
