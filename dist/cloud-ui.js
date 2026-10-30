@@ -33,11 +33,51 @@
     });
   }
 
+  function renderStoreSwitcher(stores, currentId) {
+    const node = document.getElementById('storeSwitcher');
+    if (!node || !stores?.length) return;
+    node.innerHTML = '<label for="storeSelect">店舗を切り替え</label><select id="storeSelect" aria-label="店舗を切り替え">' +
+      stores.map(store => '<option value="' + store.id + '"' + (store.id === currentId ? ' selected' : '') + '>' + esc(store.name) + '</option>').join('') +
+      '</select><small>店舗ワークスペース</small>';
+    document.getElementById('storeSelect').addEventListener('change', async event => {
+      const select = event.target;
+      select.disabled = true;
+      try {
+        const result = await window.KitchenCloud.switchStore(select.value);
+        if (result.data) {
+          db = result.data;
+          localStorage.setItem(KEY, JSON.stringify(db));
+        } else {
+          const fresh = {
+            ...db,
+            items: db.items.filter(item => item.catalogItem || item.id.startsWith('catalog-')).map(item => ({ ...item, stock: null })),
+            orders: [],
+            history: []
+          };
+          db = fresh;
+          localStorage.setItem(KEY, JSON.stringify(db));
+          await window.KitchenCloud.save(db);
+        }
+        renderStoreSwitcher(result.stores, result.storeId);
+        render();
+        window.KitchenCloud.subscribe(next => {
+          db = next;
+          localStorage.setItem(KEY, JSON.stringify(db));
+          render();
+        });
+      } catch (error) {
+        select.disabled = false;
+        toast(error.message || '店舗を切り替えられませんでした。');
+      }
+    });
+  }
+
   window.initCloud = async function () {
     if (!window.KitchenCloud?.enabled) { render(); return; }
     try {
       const result = await window.KitchenCloud.load();
       if (!result.authenticated) { showAuth(); return; }
+      renderStoreSwitcher(result.stores, result.storeId);
       if (result.data) {
         db = result.data;
         localStorage.setItem(KEY, JSON.stringify(db));

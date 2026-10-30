@@ -4,27 +4,34 @@
   const enabled = Boolean(config.url && config.anonKey && sdk && sdk.createClient);
   const client = enabled ? sdk.createClient(config.url, config.anonKey) : null;
   let storeId = null;
+  let storeName = '';
+  let stores = [];
+  let channel = null;
 
   async function session() {
     if (!client) return { user: null };
     const result = await client.auth.getUser();
     return { user: result.data?.user || null, error: result.error || null };
   }
-  async function resolveStore(user) {
-    const result = await client.from('store_members').select('store_id').eq('user_id', user.id).limit(1).maybeSingle();
+  async function resolveStores(user, selectedId) {
+    const result = await client.from('store_members').select('store_id, role, stores(id, name)').eq('user_id', user.id);
     if (result.error) throw result.error;
-    storeId = result.data?.store_id || null;
-    if (!storeId) throw new Error('店舗メンバーに登録されていません。店舗オーナーにユーザーIDを追加してもらってください。');
+    stores = (result.data || []).map(row => ({ id: row.store_id, name: row.stores?.name || '店舗', role: row.role }));
+    if (!stores.length) throw new Error('店舗メンバーに登録されていません。店舗オーナーにユーザーIDを追加してもらってください。');
+    storeId = stores.some(store => store.id === selectedId) ? selectedId : stores[0].id;
+    storeName = stores.find(store => store.id === storeId)?.name || '店舗';
   }
-  async function load() {
+  async function load(selectedId) {
     const current = await session();
     if (!current.user) return { authenticated: false, data: null };
-    await resolveStore(current.user);
+    await resolveStores(current.user, selectedId || localStorage.getItem('kitchen-stock-store'));
     const result = await client.from('store_state').select('data').eq('store_id', storeId).maybeSingle();
     if (result.error) throw result.error;
     const data = result.data?.data;
-    return { authenticated: true, data: data && Array.isArray(data.items) ? data : null };
+    localStorage.setItem('kitchen-stock-store', storeId);
+    return { authenticated: true, data: data && Array.isArray(data.items) ? data : null, stores, storeId, storeName };
   }
+  async function switchStore(id) { return load(id); }
   async function save(data) {
     if (!client || !storeId) return;
     const current = await session();
@@ -47,11 +54,12 @@
   async function signOut() { if (client) await client.auth.signOut(); }
   function subscribe(onChange) {
     if (!client || !storeId) return;
-    client.channel('kitchen-stock-state')
+    if (channel) client.removeChannel(channel);
+    channel = client.channel('kitchen-stock-state-' + storeId)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'store_state', filter: 'store_id=eq.' + storeId }, payload => {
         const data = payload.new?.data;
         if (data && Array.isArray(data.items)) onChange(data);
       }).subscribe();
   }
-  window.KitchenCloud = { enabled, session, load, save, signIn, signUp, signOut, subscribe };
+  window.KitchenCloud = { enabled, session, load, switchStore, save, signIn, signUp, signOut, subscribe, get stores() { return stores; }, get storeId() { return storeId; }, get storeName() { return storeName; } };
 })();
