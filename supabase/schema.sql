@@ -61,6 +61,13 @@ create table if not exists public.order_lines (
   unit_price numeric
 );
 
+create table if not exists public.store_state (
+  store_id uuid primary key references public.stores(id) on delete cascade,
+  data jsonb not null default '{}'::jsonb,
+  updated_by uuid references auth.users(id),
+  updated_at timestamptz not null default now()
+);
+
 create index if not exists products_store_id_idx on public.products(store_id);
 create index if not exists stock_movements_store_id_idx on public.stock_movements(store_id, created_at desc);
 create index if not exists orders_store_id_idx on public.orders(store_id, ordered_at desc);
@@ -78,6 +85,7 @@ alter table public.products enable row level security;
 alter table public.stock_movements enable row level security;
 alter table public.orders enable row level security;
 alter table public.order_lines enable row level security;
+alter table public.store_state enable row level security;
 
 drop policy if exists stores_member_read on public.stores;
 create policy stores_member_read on public.stores for select using (public.is_store_member(id));
@@ -96,10 +104,16 @@ create policy order_lines_member_all on public.order_lines for all using (
   exists (select 1 from public.orders o where o.id = order_id and public.is_store_member(o.store_id))
 );
 
+drop policy if exists store_state_member_all on public.store_state;
+create policy store_state_member_all on public.store_state for all
+using (public.is_store_member(store_id))
+with check (public.is_store_member(store_id));
+
 alter table public.products replica identity full;
 alter table public.stock_movements replica identity full;
 alter table public.orders replica identity full;
 alter table public.order_lines replica identity full;
+alter table public.store_state replica identity full;
 
 -- Make the script safe to run again after a partial success.
 do $$
@@ -115,6 +129,9 @@ begin
   end if;
   if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'order_lines') then
     alter publication supabase_realtime add table public.order_lines;
+  end if;
+  if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'store_state') then
+    alter publication supabase_realtime add table public.store_state;
   end if;
 end $$;
 

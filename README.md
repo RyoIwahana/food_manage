@@ -23,7 +23,9 @@
 
 ## Vercel＋Supabase移行
 
-共有同期版のデータベース定義は supabase/schema.sql にあります。SupabaseでSQLを実行し、Vercelに NEXT_PUBLIC_SUPABASE_URL と NEXT_PUBLIC_SUPABASE_ANON_KEY を設定した後、フロントエンドを共有APIへ切り替えます。現在の静的版は引き続きlocalStorage版として動作します。
+共有同期版のデータベース定義は `supabase/schema.sql` にあります。Supabase SQL Editorでこのファイル全体を実行し、Vercelに `NEXT_PUBLIC_SUPABASE_URL` と `NEXT_PUBLIC_SUPABASE_ANON_KEY` をProduction・Preview・Developmentへ設定してください。`vercel.json` が `npm run build` と `dist` 出力を指定するため、GitHubへのpush後に自動デプロイされます。
+
+初回はSupabase Authでスタッフ用アカウントを作成し、SQL Editorで店舗とメンバーを登録します。`store_state` に店舗ごとの在庫・発注データを保存し、同じ店舗のログインユーザーへRealtimeで反映します。Supabaseのメール確認を有効にしている場合は、確認メールのリンクを開いてからログインしてください。
 
 ## 動作確認
 ブラウザで不足5食材→仕入先4社への発注分割、トマト8kg入荷（2→10kg）、再読込後の永続化を確認。

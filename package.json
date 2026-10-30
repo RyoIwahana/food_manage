@@ -5,7 +5,8 @@
   "description": "飲食店向け在庫・発注管理",
   "scripts": {
     "dev": "python3 -m http.server 4173 --bind 127.0.0.1 --directory dist",
-    "check": "node --check dist/catalog.js && node --check dist/app.js",
+    "build": "node scripts/build-config.cjs",
+    "check": "node --check scripts/build-config.cjs && node --check dist/catalog.js && node --check dist/cloud-sync.js && node --check dist/cloud-ui.js && node --check dist/app.js",
     "test": "node --test tests/*.test.cjs"
   }
 }
